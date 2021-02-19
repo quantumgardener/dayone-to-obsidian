@@ -1,56 +1,69 @@
-from itertools import groupby, chain
 import datetime
-from dateutil import parser
-import codecs
+import dateutil.parser
+import json
+import pytz
+import re
 
-filename='journal.md'
+fn = "D:\OneDrive\Documents\dayone\Journal.json"
+with open(fn, encoding='utf-8') as json_file:
+    data = json.load(json_file)
+    for entry in data['entries']:
+        newEntry = []
+
+        # Start YAML
+        newEntry.append( '---\n' )
+
+        # Add raw create datetime adjusted for timezone and identify timezone
+        createDate = dateutil.parser.isoparse(entry['creationDate'])
+        newEntry.append( 'Creation Date: %s\n' % createDate.astimezone(pytz.timezone(entry['timeZone'])) )
+        newEntry.append( 'Timezone: %s\n' % entry['timeZone'] ) 
+
+        # Add location
+        location = ''
+        for locale in ['placeName', 'localityName', 'administrativeArea', 'country']:
+            try:
+                location = "%s, %s" % (location, entry['location'][locale] )
+            except KeyError:
+                pass
+        newEntry.append( 'Location: %s\n' % location[2:]) # Remove leading ", "
+
+        # Add GPS, not all entries have this
+        try:
+            newEntry.append( 'GPS: %s, %s\n' % ( entry['location']['latitude'], entry['location']['longitude'] ) )
+        except KeyError:
+            pass
+
+        # Finish YAML
+        newEntry.append( '---\n' )
+
+        # Add body text if it exists, after some tidying upp
+        try:
+            newText = entry['text'].replace("\\", "")
+            newText = newText.replace( "\u2028", "\n")
+            newText = newText.replace( "\u1C6A", "\n\n")
+            #newText = newText.replace( "![]dayone-moment://", "photos/")
+            # Replace all photos
+            #newText = re.search("(\!\[\]\(dayone-moment:\/\/)([A-F0-9]+)(\))", newText)
+            newText = re.sub("(\!\[\]\(dayone-moment:\/\/)([A-F0-9]+)(\))", r'[[\2.jpeg]]', newText)
+            newEntry.append( newText )
+        except KeyError:
+            pass
+
+        # Let's add some tags at the bottom to finish up
+        tags = ''
+        if 'tags' in entry:
+            for t in entry['tags']:
+                tags = "%s #%s" % (tags, t.replace(' ', '-'))
+
+        if entry['starred']:
+            tags = "%s #starred" % tags 
+
+        if tags != '':
+            newEntry.append( "\n\n%s" % tags )
 
 
-
-# From https://stackoverflow.com/questions/35773600/how-to-split-file-into-chunks-by-string-delimiter-in-python
-def getEntries(filename):
-    with open(filename,'r', encoding="utf-8") as f:
-        grps = groupby(f, key=lambda x: x.startswith("\tDate:")) # Used Date: as indicator of a new file
-        for k, v in grps:
-            if k:
-                yield chain([next(v)], (next(grps)[1]))  # all lines up to next #TYPE
-
-i = 1
-
-for entry in getEntries(filename):
-    # control variables
-    endYAML = 2 # Point at which we insert the YAML end ---. Start at 2 which is after the first --- is inserted and the date which we always know we have. Other metadata will extend this
-    reflections = False
-
-    e = list(entry)
-    e[0] = e[0].replace("\tDate:","Date: ") # Tidy up the date line for YAML
-    dateWritten = e[0][6:]
-    if e[1].find("\tLocation:\t") >= 0:
-        e[1] = e[1].replace("\tLocation:\t","Location: ")
-        endYAML += 1
-    i+=1
-    if i>300:
-        break
-
-    # Modify any special text lines
-    b = [x for x, value in enumerate(e) if value[:4] == "Refl" ]
-    if not len(b) == 0:
-        print (e[b[0]])
-        e[b[0]] = "\n*%s*\n" % e[b[0]][:-1]
-        reflections = True
-
-
-    # set up for output - wrap YAML then get filename from date
-    e.insert(0, "---\n")
-    e.insert(endYAML, "---\n")
-    if reflections:
-        e.append( "#reflections ")
-    try:
-        fn = parser.parse(dateWritten).date()
-    except UnknownTimezoneWarning:
-        pass
-    
-    with open('%s.md' % fn, 'w', encoding='utf-8') as f:
-        for line in e:
+        fnNew = "D:\OneDrive\Documents\dayone\%s.md" % createDate.strftime( '%Y-%m-%d')
+        with open(fnNew, 'w', encoding='utf-8') as f:
+         for line in newEntry:
             f.write(line)
-            
+
