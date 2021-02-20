@@ -4,10 +4,27 @@ import json
 import pytz    # pip install pytz
 import re
 import os
+import sys
+import shutil
+import time
 
 # Set this as the location where your Journal.json file is located
 root = r"D:\OneDrive\Documents\dayone" 
+journalFolder = os.path.join(root, "journal") #name of folder where journal entries will end up
 fn = os.path.join( root, "Journal.json" )
+
+# Clean out existing journal folder, otherwise each run creates new files
+if os.path.isdir(journalFolder):
+    print ("Deleting existing folder: %s" % journalFolder)
+    shutil.rmtree(journalFolder)
+
+time.sleep(2)  # Give time for folder deletion to complete. Only a problem if you have the folder open when trying to run the script
+if not os.path.isdir(journalFolder):
+    print( "Creating journal folder: %s" % journalFolder)
+    os.mkdir(journalFolder)
+
+print( "Begin processing entries")
+count = 0
 with open(fn, encoding='utf-8') as json_file:
     data = json.load(json_file)
     for entry in data['entries']:
@@ -35,6 +52,15 @@ with open(fn, encoding='utf-8') as json_file:
             newEntry.append( 'GPS: %s, %s\n' % ( entry['location']['latitude'], entry['location']['longitude'] ) )
         except KeyError:
             pass
+
+        # Add any tags to YAML. They are also added separately at end of entry to tie in as Obisidan tags
+        # Tags in YAML are not recognised by Obsidian
+        if 'tags' in entry:
+            newEntry.append( "Tags: %s\n" % ", ".join(entry['tags']))
+
+        if entry['starred']:
+            newEntry.append( "Starred: True\n" )
+
 
         # Finish YAML
         newEntry.append( '---\n' )
@@ -77,16 +103,13 @@ with open(fn, encoding='utf-8') as json_file:
         newEntry.append( "\n\n%s" % tags )
 
         # Save entries organised by year, year-month, year-month-day.md
-        yearDir = os.path.join( root, str(createDate.year) )
+        yearDir = os.path.join( journalFolder, str(createDate.year) )
         monthDir = os.path.join( yearDir, createDate.strftime( '%Y-%m'))
-        try:
-            os.stat(yearDir)
-        except:
+
+        if not os.path.isdir(yearDir):
             os.mkdir(yearDir)
         
-        try:
-            os.stat(monthDir)
-        except:
+        if not os.path.isdir(monthDir):
             os.mkdir(monthDir)
         
         # Target filename to save to. Will be modified if already exists
@@ -105,4 +128,8 @@ with open(fn, encoding='utf-8') as json_file:
         with open(fnNew, 'w', encoding='utf-8') as f:
          for line in newEntry:
             f.write(line)
+
+        count += 1
+
+print ("Complete: %d entries processed." % count)
 
