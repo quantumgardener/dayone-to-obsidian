@@ -94,12 +94,12 @@ with open(fn, encoding='utf-8') as json_file:
         
         # Here is where we handle multiple entries on the same day. Each goes to it's own file
         if os.path.isfile( fnNew):
-            # File exists, need to find the next in sequence
+            # File exists, need to find the next in sequence and append alpha character marker
             index = 97 #ASCII a
-            fnNew = os.path.join( monthDir, "%s-%s.md" % (createDate.strftime( '%Y-%m-%d'), chr(index)))
+            fnNew = os.path.join( monthDir, "%s%s.md" % (createDate.strftime( '%Y-%m-%d'), chr(index)))
             while os.path.isfile(fnNew):
                 index += 1
-                fnNew = os.path.join( monthDir, "%s-%s.md" % (createDate.strftime( '%Y-%m-%d'), chr(index)))
+                fnNew = os.path.join( monthDir, "%s%s.md" % (createDate.strftime( '%Y-%m-%d'), chr(index)))
 
 
         with open(fnNew, 'w', encoding='utf-8') as f:
