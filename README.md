@@ -1,5 +1,5 @@
 # dayone-to-obsidian
-Convert a DayOne JSON export into individual entries for Obsidian. Each entry is created as a separate page.
+Convert a [DayOne](https://dayoneapp.com/) JSON export into individual entries for [Obsidian](https://obsidian.md). Each entry is created as a separate page. It was created for my own use and is unlikely to be modified now that it has served it's purpose.
 
 ## Requirements
 * Python 3
@@ -13,7 +13,7 @@ Convert a DayOne JSON export into individual entries for Obsidian. Each entry is
 **DO NOT do this in your current vault. Create a new vault for the purpose of testing. You are responsible for ensuring against data loss**
 **This script deletes folders if run a second time**
 **This script renames files**
-1. Export your journal from DayOne in JSON format 
+1. Export your journal from [DayOne in JSON format](https://help.dayoneapp.com/en/articles/440668-exporting-entries) 
 2. Expand that zip file
 3. Adjust the *root* variable to point to the location where your zip file was expanded and Journal.json exists. You should also have a photos folder here if there were photos in your journal
 4. If you **not** are using the [Icons Plugin](https://github.com/visini/obsidian-icons-plugin) to display calendar marker at start of page heading set *icons = False*
