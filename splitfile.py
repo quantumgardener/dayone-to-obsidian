@@ -10,6 +10,9 @@ import time
 
 # Set this as the location where your Journal.json file is located
 root = r"D:\OneDrive\Documents\dayone" 
+icons = True    # Set to true if you are using the Icons Plugin in Obsidian
+
+
 journalFolder = os.path.join(root, "journal") #name of folder where journal entries will end up
 fn = os.path.join( root, "Journal.json" )
 
@@ -23,6 +26,13 @@ if not os.path.isdir(journalFolder):
     print( "Creating journal folder: %s" % journalFolder)
     os.mkdir(journalFolder)
 
+if icons:
+    print ("Icons are on")
+    dateIcon = "`fas:CalendarAlt` "
+else:
+    dateIcon = "## "  #make 2nd level heading
+
+
 print( "Begin processing entries")
 count = 0
 with open(fn, encoding='utf-8') as json_file:
@@ -35,7 +45,8 @@ with open(fn, encoding='utf-8') as json_file:
 
         # Add raw create datetime adjusted for timezone and identify timezone
         createDate = dateutil.parser.isoparse(entry['creationDate'])
-        newEntry.append( 'Creation Date: %s\n' % createDate.astimezone(pytz.timezone(entry['timeZone'])) )
+        localDate = createDate.astimezone(pytz.timezone(entry['timeZone'])) # It's natural to use our local date/time as reference point, not UTC
+        newEntry.append( 'Creation Date: %s\n' % localDate )
         newEntry.append( 'Timezone: %s\n' % entry['timeZone'] ) 
 
         # Add location
@@ -45,7 +56,9 @@ with open(fn, encoding='utf-8') as json_file:
                 location = "%s, %s" % (location, entry['location'][locale] )
             except KeyError:
                 pass
-        newEntry.append( 'Location: %s\n' % location[2:]) # Remove leading ", "
+        location = location[2:]
+        if not location == '':
+            newEntry.append( 'Location: %s\n' % location) # Remove leading ", "
 
         # Add GPS, not all entries have this
         try:
@@ -67,9 +80,15 @@ with open(fn, encoding='utf-8') as json_file:
 
         # Add a page header
         if sys.platform == "win32":
-            newEntry.append( '## %s\n' % createDate.astimezone(pytz.timezone(entry['timeZone'])).strftime( "%A, %#d %B %Y at %#I:%M %p"))
+            newEntry.append( '## %s%s\n' % (dateIcon, localDate.strftime( "%A, %#d %B %Y at %#I:%M %p")))
         else:
-            newEntry.append( '## %s\n' % createDate.strftime( "%A, %-d %B %Y"))  #untested
+            newEntry.append( '%s%s\n' % (dateIcon, localDate.strftime( "%A, %-d %B %Y at %-I:%M %p")))  #untested
+        if not location == '':  #Let's add a map marker
+            try:
+                newEntry.append( '*[%s](https://www.google.com/maps/search/?api=1&query=%s&map_action=map&basemap=satellite)*\n' % (location, location.replace(" ", "+")) )
+            except KeyError:
+                newEntry.append( '*%s*\n' % (location) )
+        newEntry.append( '\n' )
 
         # Add body text if it exists (can have the odd blank entry), after some tidying up
         try:
@@ -119,16 +138,16 @@ with open(fn, encoding='utf-8') as json_file:
             os.mkdir(monthDir)
         
         # Target filename to save to. Will be modified if already exists
-        fnNew = os.path.join( monthDir, "%s.md" % createDate.strftime( '%Y-%m-%d'))
+        fnNew = os.path.join( monthDir, "%s.md" % localDate.strftime( '%Y-%m-%d'))
         
         # Here is where we handle multiple entries on the same day. Each goes to it's own file
         if os.path.isfile( fnNew):
             # File exists, need to find the next in sequence and append alpha character marker
             index = 97 #ASCII a
-            fnNew = os.path.join( monthDir, "%s%s.md" % (createDate.strftime( '%Y-%m-%d'), chr(index)))
+            fnNew = os.path.join( monthDir, "%s%s.md" % (localDate.strftime( '%Y-%m-%d'), chr(index)))
             while os.path.isfile(fnNew):
                 index += 1
-                fnNew = os.path.join( monthDir, "%s%s.md" % (createDate.strftime( '%Y-%m-%d'), chr(index)))
+                fnNew = os.path.join( monthDir, "%s%s.md" % (localDate.strftime( '%Y-%m-%d'), chr(index)))
 
 
         with open(fnNew, 'w', encoding='utf-8') as f:
