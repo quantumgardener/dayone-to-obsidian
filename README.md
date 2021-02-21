@@ -9,7 +9,11 @@ Convert a DayOne JSON export into individual entries for Obsidian. Each entry is
 * Obsidian [Icons Plugin](https://github.com/visini/obsidian-icons-plugin) to display calendar marker at start of page heading
 
 ## Setup
-1. Export your journal from DayOne in JSON format **DO NOT do this in your current vault. Create a new vault for the purpose of testing**
+
+**DO NOT do this in your current vault. Create a new vault for the purpose of testing. You are responsible for ensuring against data loss**
+**This script deletes folders if run a second time**
+**This script renames files**
+1. Export your journal from DayOne in JSON format 
 2. Expand that zip file
 3. Adjust the *root* variable to point to the location where your zip file was expanded and Journal.json exists. You should also have a photos folder here if there were photos in your journal
 4. If you **not** are using the [Icons Plugin](https://github.com/visini/obsidian-icons-plugin) to display calendar marker at start of page heading set *icons = False*
