@@ -34,7 +34,3 @@ Convert a [DayOne](https://dayoneapp.com/) JSON export into individual entries f
 * Every entry has the date inserted in the text for easier reading (with a calendar icon to help you quickly distinguish from other entries in your vault)
 * If location is specified, it is given under the date, linked to Google Search
 * Tags added at the bottom, each as a subtag of journal to distinguish from other tags in your vault
-
-## A note on photos
-For whatever reason, photo identifiers in the text of an entry within the JSON file are not saved with that identifier. Instead they are named with the MD5 digest of the file. We fix this by renaming all files to match the identifier in the text entry. This rename only occurs if required.
-
