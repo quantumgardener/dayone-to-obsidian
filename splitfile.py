@@ -65,7 +65,13 @@ with open(fn, encoding='utf-8') as json_file:
         # Finish YAML
         newEntry.append( '---\n' )
 
-        # Add body text if it exists, after some tidying upp
+        # Add a page header
+        if sys.platform == "win32":
+            newEntry.append( '## %s\n' % createDate.astimezone(pytz.timezone(entry['timeZone'])).strftime( "%A, %#d %B %Y at %#I:%M %p"))
+        else:
+            newEntry.append( '## %s\n' % createDate.strftime( "%A, %-d %B %Y"))  #untested
+
+        # Add body text if it exists (can have the odd blank entry), after some tidying up
         try:
             newText = entry['text'].replace("\\", "")
             newText = newText.replace( "\u2028", "\n")
