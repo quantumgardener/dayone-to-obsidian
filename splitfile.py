@@ -11,6 +11,7 @@ import time
 # Set this as the location where your Journal.json file is located
 root = r"D:\OneDrive\Documents\dayone" 
 icons = True    # Set to true if you are using the Icons Plugin in Obsidian
+tagPrefix = "journal/"  # This will append journal/ as part of the tag name for sub-tags ie. instead of #entry, it is #journal/entry. To exclude set to "". If you change journal to something else, make sure you keep the trailing /
 
 
 journalFolder = os.path.join(root, "journal") #name of folder where journal entries will end up
@@ -69,7 +70,10 @@ with open(fn, encoding='utf-8') as json_file:
         # Add any tags to YAML. They are also added separately at end of entry to tie in as Obisidan tags
         # Tags in YAML are not recognised by Obsidian
         if 'tags' in entry:
-            newEntry.append( "Tags: %s\n" % ", ".join(entry['tags']))
+            tags = []
+            for t in entry['tags']:
+                tags.append( "%s%s" % (tagPrefix, t.replace(' ', '-') ) )
+            newEntry.append( "Tags: %s\n" % ", ".join( tags ))
 
         if entry['starred']:
             newEntry.append( "Starred: True\n" )
@@ -116,16 +120,20 @@ with open(fn, encoding='utf-8') as json_file:
         except KeyError:
             pass
 
-        # Let's add some tags at the bottom to finish up
-        tags = '#journal/entry\n'
-        if 'tags' in entry:
-            for t in entry['tags']:
-                tags = "%s#journal/%s\n" % (tags, t.replace(' ', '-'))
 
-        if entry['starred']:
-            tags = "%s#journal/starred\n" % tags 
+        ### IF YOU WANT TAGS AT THE BOTTOM OF AN ENTRY, UNCOMMENT THESE LINES
+        ### Start uncommenting
+        # # Let's add some tags at the bottom to finish up
+        # tags = '#%sentry\n' % tagPrefix
+        # if 'tags' in entry:
+        #     for t in entry['tags']:
+        #         tags = "%s#%s%s\n" % (tags, tagPrefix, t.replace(' ', '-'))
 
-        newEntry.append( "\n\n%s" % tags )
+        # if entry['starred']:
+        #     tags = "%s#%sstarred\n" % ( tags, tagPrefix ) 
+
+        # newEntry.append( "\n\n%s" % tags )
+        # Stop uncommenting
 
         # Save entries organised by year, year-month, year-month-day.md
         yearDir = os.path.join( journalFolder, str(createDate.year) )
