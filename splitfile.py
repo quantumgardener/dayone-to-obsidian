@@ -10,8 +10,8 @@ import time
 
 # Set this as the location where your Journal.json file is located
 root = r"D:\OneDrive\Documents\dayone" 
-icons = True    # Set to true if you are using the Icons Plugin in Obsidian
-tagPrefix = "journal/"  # This will append journal/ as part of the tag name for sub-tags ie. instead of #entry, it is #journal/entry. To exclude set to "". If you change journal to something else, make sure you keep the trailing /
+icons = False   # Set to true if you are using the Icons Plugin in Obsidian
+tagPrefix = "#journal/"  # This will append journal/ as part of the tag name for sub-tags ie. instead of #entry, it is #journal/entry. To exclude set to "". If you change journal to something else, make sure you keep the trailing /
 
 
 journalFolder = os.path.join(root, "journal") #name of folder where journal entries will end up
@@ -31,7 +31,8 @@ if icons:
     print ("Icons are on")
     dateIcon = "`fas:CalendarAlt` "
 else:
-    dateIcon = "## "  #make 2nd level heading
+    print ("Icons are off")
+    dateIcon = ""  #make 2nd level heading
 
 
 print( "Begin processing entries")
@@ -41,15 +42,9 @@ with open(fn, encoding='utf-8') as json_file:
     for entry in data['entries']:
         newEntry = []
 
-        # Start YAML
-        newEntry.append( '---\n' )
-
-        # Add raw create datetime adjusted for timezone and identify timezone
         createDate = dateutil.parser.isoparse(entry['creationDate'])
         localDate = createDate.astimezone(pytz.timezone(entry['timeZone'])) # It's natural to use our local date/time as reference point, not UTC
-        newEntry.append( 'Creation Date: %s\n' % localDate )
-        newEntry.append( 'Timezone: %s\n' % entry['timeZone'] ) 
-
+ 
         # Add location
         location = ''
         for locale in ['placeName', 'localityName', 'administrativeArea', 'country']:
@@ -58,41 +53,13 @@ with open(fn, encoding='utf-8') as json_file:
             except KeyError:
                 pass
         location = location[2:]
-        if not location == '':
-            newEntry.append( 'Location: %s\n' % location) # Remove leading ", "
-
-        # Add GPS, not all entries have this
-        try:
-            newEntry.append( 'GPS: %s, %s\n' % ( entry['location']['latitude'], entry['location']['longitude'] ) )
-        except KeyError:
-            pass
-
-        # Add any tags to YAML. They are also added separately at end of entry to tie in as Obisidan tags
-        # Tags in YAML are not recognised by Obsidian
-        if 'tags' in entry:
-            tags = []
-            for t in entry['tags']:
-                tags.append( "%s%s" % (tagPrefix, t.replace(' ', '-') ) )
-            newEntry.append( "Tags: %s\n" % ", ".join( tags ))
-
-        if entry['starred']:
-            newEntry.append( "Starred: True\n" )
-
-
-        # Finish YAML
-        newEntry.append( '---\n' )
-
-        # Add a page header
+ 
+        # Add date as page header, removing time if it's 12 midday as time obviously not read
         if sys.platform == "win32":
-            newEntry.append( '## %s%s\n' % (dateIcon, localDate.strftime( "%A, %#d %B %Y at %#I:%M %p")))
+            newEntry.append( '## %s%s\n' % (dateIcon, localDate.strftime( "%A, %#d %B %Y at %#I:%M %p").replace( " at 12:00 PM", "")))
         else:
-            newEntry.append( '%s%s\n' % (dateIcon, localDate.strftime( "%A, %-d %B %Y at %-I:%M %p")))  #untested
-        if not location == '':  #Let's add a map marker
-            try:
-                newEntry.append( '*[%s](https://www.google.com/maps/search/?api=1&query=%s&map_action=map&basemap=satellite)*\n' % (location, location.replace(" ", "+")) )
-            except KeyError:
-                newEntry.append( '*%s*\n' % (location) )
-        newEntry.append( '\n' )
+            newEntry.append( '## %s%s\n' % (dateIcon, localDate.strftime( "%A, %-d %B %Y at %-I:%M %p").replace( " at 12:00 PM", "")))  #untested
+
 
         # Add body text if it exists (can have the odd blank entry), after some tidying up
         try:
@@ -120,20 +87,37 @@ with open(fn, encoding='utf-8') as json_file:
         except KeyError:
             pass
 
+        ## Start Metadata section
 
-        ### IF YOU WANT TAGS AT THE BOTTOM OF AN ENTRY, UNCOMMENT THESE LINES
-        ### Start uncommenting
-        # # Let's add some tags at the bottom to finish up
-        # tags = '#%sentry\n' % tagPrefix
-        # if 'tags' in entry:
-        #     for t in entry['tags']:
-        #         tags = "%s#%s%s\n" % (tags, tagPrefix, t.replace(' ', '-'))
+        # newEntry.append( '%%\n' ) #uncomment to hide metadata
 
-        # if entry['starred']:
-        #     tags = "%s#%sstarred\n" % ( tags, tagPrefix ) 
+        newEntry.append( '\n\n---\n' )
+        newEntry.append( '**Metadata**\n')
+        
+        # Add raw create datetime adjusted for timezone and identify timezone
+        newEntry.append( '- Creation Date: %s (%s)\n' % (localDate,entry['timeZone']) )
+        
+        if not location == '':
+            newEntry.append( '- Location: [[%s]]\n' % location) # Remove leading ", "
 
-        # newEntry.append( "\n\n%s" % tags )
-        # Stop uncommenting
+        # Add GPS, not all entries have this
+        # try:
+        #     newEntry.append( '- GPS: [%s, %s](https://www.google.com/maps/search/?api=1&query=%s,%s)\n' % ( entry['location']['latitude'], entry['location']['longitude'], entry['location']['latitude'], entry['location']['longitude'] ) )
+        # except KeyError:
+        #     pass
+
+
+        tags = []
+        if 'tags' in entry:
+            tags = []
+            for t in entry['tags']:
+                tags.append( "%s%s" % (tagPrefix, t.replace(' ', '-').replace('---', '-') ) )
+            if entry['starred']:
+                tags.append( "%sstarred" % (tagPrefix) )
+        if len(tags) > 0:
+            newEntry.append( "- Tags: %s\n" % " ".join( tags ))
+
+
 
         # Save entries organised by year, year-month, year-month-day.md
         yearDir = os.path.join( journalFolder, str(createDate.year) )
