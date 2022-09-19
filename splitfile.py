@@ -44,7 +44,7 @@ with open(fn, encoding='utf-8') as json_file:
 
         createDate = dateutil.parser.isoparse(entry['creationDate'])
         localDate = createDate.astimezone(pytz.timezone(entry['timeZone'])) # It's natural to use our local date/time as reference point, not UTC
- 
+
         # Add location
         location = ''
         for locale in ['placeName', 'localityName', 'administrativeArea', 'country']:
@@ -53,13 +53,27 @@ with open(fn, encoding='utf-8') as json_file:
             except KeyError:
                 pass
         location = location[2:]
+
+        dateCreated = str(createDate)
+        coordinates = ''
+ 
+        frontmatter = '''---
+- created: ''' + dateCreated + '''
+'''
+        
+        if 'location' in entry:
+            coordinates = str(entry['location']['latitude']) + ',' + str(entry['location']['longitude'])
+            frontmatter = frontmatter +  '- location: [' + coordinates + ']'
+        frontmatter = frontmatter + '''
+---
+'''
+        newEntry.append(frontmatter)
  
         # Add date as page header, removing time if it's 12 midday as time obviously not read
         if sys.platform == "win32":
             newEntry.append( '## %s%s\n' % (dateIcon, localDate.strftime( "%A, %#d %B %Y at %#I:%M %p").replace( " at 12:00 PM", "")))
         else:
             newEntry.append( '## %s%s\n' % (dateIcon, localDate.strftime( "%A, %-d %B %Y at %-I:%M %p").replace( " at 12:00 PM", "")))  #untested
-
 
         # Add body text if it exists (can have the odd blank entry), after some tidying up
         try:
@@ -89,23 +103,20 @@ with open(fn, encoding='utf-8') as json_file:
 
         ## Start Metadata section
 
-        # newEntry.append( '%%\n' ) #uncomment to hide metadata
-
         newEntry.append( '\n\n---\n' )
-        newEntry.append( '**Metadata**\n')
-        
-        # Add raw create datetime adjusted for timezone and identify timezone
-        newEntry.append( '- Creation Date: %s (%s)\n' % (localDate,entry['timeZone']) )
-        
+
         if not location == '':
-            newEntry.append( '- Location: [[%s]]\n' % location) # Remove leading ", "
+            if coordinates == []:
+                locationString =  location 
+            else:
+                locationString = '[' + location + '](geo:' + coordinates + ')'
+            newEntry.append( locationString ) 
 
         # Add GPS, not all entries have this
         # try:
         #     newEntry.append( '- GPS: [%s, %s](https://www.google.com/maps/search/?api=1&query=%s,%s)\n' % ( entry['location']['latitude'], entry['location']['longitude'], entry['location']['latitude'], entry['location']['longitude'] ) )
         # except KeyError:
         #     pass
-
 
         tags = []
         if 'tags' in entry:
@@ -149,4 +160,3 @@ with open(fn, encoding='utf-8') as json_file:
         count += 1
 
 print ("Complete: %d entries processed." % count)
-
