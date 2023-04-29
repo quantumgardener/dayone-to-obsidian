@@ -1,5 +1,7 @@
 # dayone-to-obsidian
-Convert a [Day One](https://dayoneapp.com/) JSON export into individual entries for [Obsidian](https://obsidian.md). Each entry is created as a separate page. It was created for my own use and is unlikely to be modified now that it has served it's purpose.
+Convert a [Day One](https://dayoneapp.com/) JSON export into individual entries for [Obsidian](https://obsidian.md). Each entry is created as a separate page. 
+
+> *This repository is no longer being monitored. The code remains available for the use of others, but no support will be given.*
 
 ## Requirements
 * Python 3
