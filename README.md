@@ -6,6 +6,7 @@ Convert a [Day One](https://dayoneapp.com/) JSON export into individual entries 
 ## Requirements
 * Python 3.x
 * pytz (pip install pytz) for timezone functions
+* Possible Visual Studio Code as your IDE. People have reported issues using another IDE. I don't know the specifics but think its most likely the need to match properly the version of Python and libraries you are using when running code within the IDE itself.
 
 ## Optional requirements
 * Obsidian [Icons Plugin](https://github.com/visini/obsidian-icons-plugin) to display calendar marker at start of page heading
