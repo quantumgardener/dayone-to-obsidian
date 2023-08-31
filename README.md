@@ -4,8 +4,8 @@ Convert a [Day One](https://dayoneapp.com/) JSON export into individual entries 
 > *This repository is no longer being monitored. The code remains available for the use of others, but no support will be given.*
 
 ## Requirements
-* Python 3
-* pytk (pip install pytk
+* Python 3.x
+* pytz (pip install pytz) for timezone functions
 
 ## Optional requirements
 * Obsidian [Icons Plugin](https://github.com/visini/obsidian-icons-plugin) to display calendar marker at start of page heading
